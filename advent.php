@@ -1,6 +1,6 @@
 <?php
 
-$rawData = file_get_contents('sample.txt');
+$rawData = file_get_contents('data.txt');
 $data = explode("\n\n", $rawData);
 
 $cratesString = $data[0];
@@ -12,11 +12,10 @@ $cratesLayout = explode("\n", $cratesString);
 array_pop($cratesLayout);
 $invertedCratesLayout = array_reverse($cratesLayout);
 
-$index = 0;
+$i = 0;
 foreach ($invertedCratesLayout as $row) {
-
-    $rows[$index] = str_split($row, 4);
-    $index++;
+    $rows[$i] = str_split($row, 4);
+    $i++;
 }
 
 $i = 0;
@@ -29,17 +28,39 @@ foreach ($rows as $singleRow) {
     }
     $finalArray[$i] = $defRow;
     $i++;
+
 }
 
-// var_dump($invertedCratesLayout);
-var_dump($finalArray);
+$orderedWarehouse = [];
+
+for ($i=0; $i < count($finalArray[0]); $i++) {
+    
+    $orderedPile = [];
+    foreach ($finalArray as $unorderedPile) {
+        $orderedPile[] = $unorderedPile[$i];
+    }
+    $orderedWarehouse["Stack "."$i"+1] = $orderedPile;
+}
+
+// Popping empty items :
+
+$finalWarehouse = [];
+$index = 1;
+
+foreach ($orderedWarehouse as $stack ) {
+    while (end($stack) === null || end($stack) === " ") {
+        array_pop($stack);
+    }
+    $finalWarehouse["stack ".$index] = $stack;
+    $index++;
+}
+$warehouse = $finalWarehouse;
+// var_dump("warehouse :",$warehouse);
 
 // Dealing with the move instructions now...
-
 $separatedInstructions = explode("\n", $moveInstructionsString);
 
 foreach ($separatedInstructions as $singleInstruction) {
-    # code
     $inter = explode("move ", $singleInstruction);
     array_shift($inter);
     $inter2 = explode(" from ", $inter[0]);
@@ -49,4 +70,26 @@ foreach ($separatedInstructions as $singleInstruction) {
     $instruction["to"] = $inter3[1];
     $instructions[] = $instruction;
 }
-var_dump($instructions);
+
+// Finally! Let's work!
+foreach ($instructions as $instruction ) {
+    $pick = "stack ".$instruction["from"];
+    $dest = "stack ".$instruction["to"];
+    $count = intval($instruction["move"]);
+    for ($i=0; $i < $count; $i++) { 
+        
+        $crate = end($warehouse[$pick]);
+        array_pop($warehouse[$pick]);
+        $warehouse[$dest][] = $crate;
+    }
+}
+
+$message = [];
+foreach ($warehouse as $stack ) {
+    $message[] = end($stack);
+}
+$key = implode("", $message);
+
+//=========== tada! ==============
+
+var_dump($key);
